@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "my-node-app"
-        DOCKERHUB_USER = "your-dockerhub-username"
+        DOCKERHUB_USER = "ravindranadhtagore"
     }
 
     stages {
