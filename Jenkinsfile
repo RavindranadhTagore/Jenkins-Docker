@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'ravindranadhtagore/web-app'  // Replace with your Docker image name
+        DOCKER_IMAGE = 'ravindranadhtagore/-app'  // Replace with your Docker image name
         DOCKER_REGISTRY = 'docker.io'  // Use 'docker.io' for DockerHub
         DOCKER_CREDENTIALS = 'docker-hub-credentials'  // Jenkins credentials ID for Docker Hub
     }
