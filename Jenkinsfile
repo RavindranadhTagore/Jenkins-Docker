@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "my-app"
+        IMAGE_NAME = "Ravi-app"
         DOCKERHUB_USER = "ravindranadhtagore"
         IMAGE_TAG = "latest"
     }
@@ -66,9 +66,9 @@ pipeline {
                 sh '''
                     ssh -o StrictHostKeyChecking=no user@your-server-ip "
                         docker pull $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG &&
-                        docker stop my-app || true &&
-                        docker rm my-app || true &&
-                        docker run -d --name my-app -p 80:80 $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                        docker stop Ravi-app || true &&
+                        docker rm Ravi-app || true &&
+                        docker run -d --name Ravi-app -p 80:80 $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
                     "
                 '''
             }
