@@ -2,63 +2,44 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "my-app"
-        DOCKERHUB_USER = "ravindranadhtagore"
-        IMAGE_TAG = "latest"
+        NODE_ENV = 'production'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                echo "Checking out code..."
-                checkout scm
+                git 'git@github.com:RavindranadhTagore/Jenkins-Docker.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
             steps {
-                echo "Building Docker image..."
-                sh "docker build -t $IMAGE_NAME ."
+                sh 'npm install'
             }
         }
 
-        stage('Login & Push to DockerHub') {
+        stage('Build Angular App') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    echo "Logging in to DockerHub and pushing image..."
-                    sh '''
-                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
-                        docker tag $IMAGE_NAME $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
-                        docker push $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
-                    '''
-                }
+                sh 'npx ng build --configuration production'
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Deploy') {
             steps {
-                echo "Deploying application..."
-                // Replace with your actual SSH and deployment command
-                // Make sure SSH credentials are configured in Jenkins
-                // Example: Pull latest image and restart container on remote server
-                sh '''
-                    ssh -o StrictHostKeyChecking=no user@your-server-ip "
-                        docker pull $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG &&
-                        docker stop my-app || true &&
-                        docker rm my-app || true &&
-                        docker run -d --name my-app -p 80:80 $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
-                    "
-                '''
+                echo 'Deploying app...'
+                // Example deployment step
+                // Replace this with your actual deploy script (Firebase, SCP, Netlify, etc.)
+                sh './deploy.sh'
             }
         }
     }
 
     post {
         success {
-            echo "✅ Deployment successful!"
+            echo 'Deployment successful!'
         }
         failure {
-            echo "❌ Deployment failed."
+            echo 'Build or Deployment failed!'
         }
     }
 }
