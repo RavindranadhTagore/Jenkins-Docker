@@ -2,44 +2,85 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'production'
+        IMAGE_NAME = "my-app"
+        DOCKERHUB_USER = "ravindranadhtagore"
+        IMAGE_TAG = "latest"
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/RavindranadhTagore/Jenkins.git'
+                echo "🔄 Checking out code..."
+                checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build') {
             steps {
+                echo "🏗️ Building the application..."
+                // Example build commands, adjust based on your tech stack
+                // Node.js/Angular: `npm install`
+                // Java Maven: `mvn clean package`
                 sh 'npm install'
             }
         }
 
-        stage('Build Angular App') {
+        stage('Test') {
             steps {
-                sh 'npx ng build --configuration production'
+                echo "🧪 Running tests..."
+                // Replace this with your project's test command
+                // For example: `npm test`, `ng test`, `mvn test`, etc.
+                sh 'npm test'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "🐳 Building Docker image..."
+                sh "docker build -t $IMAGE_NAME ."
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD'
+                )]) {
+                    echo "📤 Pushing image to DockerHub..."
+                    sh '''
+                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
+                        docker tag $IMAGE_NAME $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                        docker push $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                    '''
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying app...'
-                // Example deployment step
-                // Replace this with your actual deploy script (Firebase, SCP, Netlify, etc.)
-                sh './deploy.sh'
+                echo "🚀 Deploying the application..."
+                // Example: Replace with actual SSH deployment
+                // Make sure SSH credentials are set up in Jenkins
+                sh '''
+                    ssh -o StrictHostKeyChecking=no user@your-server-ip "
+                        docker pull $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG &&
+                        docker stop my-app || true &&
+                        docker rm my-app || true &&
+                        docker run -d --name my-app -p 80:80 $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                    "
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment successful!'
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
-            echo 'Build or Deployment failed!'
+            echo "❌ Pipeline failed. Check the logs for more info."
         }
     }
 }
