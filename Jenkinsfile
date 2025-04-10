@@ -2,49 +2,54 @@ pipeline {
     agent any
 
     environment {
-        // Define environment variables if needed
-        DEPLOY_ENV = "production"
+        IMAGE_NAME = "my-app"
+        IMAGE_TAG = "latest"
+        REGISTRY = "your-dockerhub-username"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo "Cloning repository..."
+                echo "Checking out source code..."
                 checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                echo "Building the application..."
-                // Example for Node.js app
-                sh 'npm install'
-                sh 'npm run build'
+                echo "Building Docker image..."
+                sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Test') {
+        stage('Push Docker Image') {
             steps {
-                echo "Running tests..."
-                sh 'npm test' // Adjust based on your test setup
+                echo "Logging into Docker and pushing image..."
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
+                    sh "docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                    sh "docker logout"
+                }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Application') {
             steps {
-                echo "Deploying the application..."
-                // Example deployment command or script
-                sh './deploy.sh' // Replace with your actual deployment logic
+                echo "Deploying Docker container..."
+                // Optional: Stop and remove previous container
+                sh "docker rm -f ${IMAGE_NAME} || true"
+                // Run the new container
+                sh "docker run -d --name ${IMAGE_NAME} -p 80:80 ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline completed successfully!"
+            echo "✅ Build and deployment completed successfully."
         }
         failure {
-            echo "Pipeline failed. Check the logs."
+            echo "❌ Pipeline failed. Check the steps for issues."
         }
     }
 }
