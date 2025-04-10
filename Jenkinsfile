@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "my-app"
         IMAGE_TAG = "latest"
-        REGISTRY = "your-dockerhub-username"
+        REGISTRY = "ravindranadhtagore"
     }
 
     stages {
